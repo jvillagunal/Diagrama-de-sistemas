@@ -35,6 +35,7 @@
             flex-wrap: wrap;
             z-index: 100;
             position: relative;
+            max-width: 900px;
         }
         
         .controls button {
@@ -60,9 +61,16 @@
             font-size: 12px;
         }
         
-        .container {
+        .container-wrapper {
+            position: relative;
             width: 900px;
             height: 900px;
+            margin: 0 auto;
+        }
+        
+        .container {
+            width: 100%;
+            height: 100%;
             position: relative;
             background: white;
             border-radius: 50%;
@@ -73,7 +81,37 @@
         .circle {
             position: absolute;
             border-radius: 50%;
-            pointer-events: none;
+            cursor: move;
+            transition: all 0.2s ease;
+            border: 3px solid transparent;
+        }
+        
+        .circle:hover {
+            border-color: #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .circle.selected {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 25px rgba(255, 107, 107, 0.5);
+        }
+        
+        .resize-handle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            cursor: nw-resize;
+            border: 2px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 20;
+        }
+        
+        .circle.selected .resize-handle {
+            opacity: 1;
         }
         
         .circle-4 {
@@ -122,7 +160,7 @@
             line-height: 1.4;
             background: rgba(255, 255, 255, 0.9);
             border: 2px solid transparent;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             pointer-events: auto;
         }
         
@@ -130,20 +168,21 @@
             background: rgba(255, 255, 255, 1);
             border-color: #667eea;
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            transform: scale(1.02);
+            transform: scale(1.01);
         }
         
         .draggable-text.selected {
             border-color: #ff6b6b;
             background: rgba(255, 255, 255, 1);
             box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+            transform: scale(1.02);
         }
         
         .draggable-text.editing {
             background: #fffbf0;
             border-color: #ffa726;
         }
-        
+
         .title {
             position: absolute;
             top: -80px;
@@ -164,6 +203,7 @@
             transition: all 0.3s ease;
             user-select: none;
             z-index: 10;
+            max-width: 90%;
         }
         
         .title:hover {
@@ -256,12 +296,106 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             z-index: 100;
             position: relative;
+            max-width: 900px;
+        }
+
+        /* Responsive para pantallas más pequeñas */
+        @media (max-width: 950px) {
+            .container-wrapper, .controls, .instruction {
+                width: 100%;
+                max-width: 700px;
+            }
+            
+            .container {
+                width: 700px;
+                height: 700px;
+            }
+            
+            .circle-4 {
+                width: 700px;
+                height: 700px;
+            }
+            
+            .circle-3 {
+                width: 500px;
+                height: 500px;
+                top: 100px;
+                left: 100px;
+            }
+            
+            .circle-2 {
+                width: 300px;
+                height: 300px;
+                top: 200px;
+                left: 200px;
+            }
+            
+            .circle-1 {
+                width: 140px;
+                height: 140px;
+                top: 280px;
+                left: 280px;
+            }
+            
+            .title {
+                font-size: 16px;
+                padding: 10px 20px;
+                top: -60px;
+            }
+        }
+
+        @media (max-width: 750px) {
+            .container-wrapper, .controls, .instruction {
+                max-width: 500px;
+            }
+            
+            .container {
+                width: 500px;
+                height: 500px;
+            }
+            
+            .circle-4 {
+                width: 500px;
+                height: 500px;
+            }
+            
+            .circle-3 {
+                width: 350px;
+                height: 350px;
+                top: 75px;
+                left: 75px;
+            }
+            
+            .circle-2 {
+                width: 200px;
+                height: 200px;
+                top: 150px;
+                left: 150px;
+            }
+            
+            .circle-1 {
+                width: 100px;
+                height: 100px;
+                top: 200px;
+                left: 200px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .title {
+                font-size: 14px;
+                padding: 8px 15px;
+                top: -50px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="instruction">
-        📝 <strong>Modo Editor:</strong> Arrastra los textos para moverlos • Doble clic para editar • Usa los controles para añadir/personalizar elementos • <strong>El título también es movible y editable</strong>
+        📝 <strong>Modo Editor:</strong> Arrastra textos y círculos • Doble clic para editar textos • Usa los handles rojos para redimensionar círculos • Selecciona elementos para cambiar colores • <strong>El título también es movible y editable</strong>
     </div>
     
     <div class="controls">
@@ -278,71 +412,78 @@
         </select>
         <input type="color" id="textColor" value="#333333" title="Color de texto">
         <input type="color" id="bgColor" value="#ffffff" title="Color de fondo">
+        <input type="color" id="circleColor" value="#a8e6cf" title="Color de círculo">
         <button onclick="resetPositions()">🔄 Restablecer</button>
     </div>
     
-    <div class="container" id="container">
-        <div class="title draggable-text" id="mainTitle">🌐 DIAGRAMA DE SISTEMAS: RELACIÓN DEL INDIVIDUO CON EL ENTORNO</div>
-        
-        <div class="circle circle-4"></div>
-        <div class="circle circle-3"></div>
-        <div class="circle circle-2"></div>
-        <div class="circle circle-1"></div>
-        
-        <!-- Textos arrastrables -->
-        <div class="draggable-text" style="top: 80px; right: 60px; width: 160px;">
-            <strong>🙏 Espiritualidad:</strong> La espiritualidad es necesaria y es un componente significativo de la vida, para la consolidación del proyecto de Dios en nuestra vida personal.
-        </div>
-        
-        <div class="draggable-text" style="bottom: 60px; left: 60px; width: 180px;">
-            <strong>📚 Inspiración Literaria:</strong> Soy amante de la literatura de Gabriel García Márquez, tanto que algunas formas de ver las cosas para mí han sido inspiradas por GABO.
-        </div>
-        
-        <div class="draggable-text" style="top: 300px; left: 50px; width: 200px;">
-            <strong>🏛️ Instituciones públicas y educativas:</strong> Con las que interactúo indirectamente a través de convocatorias, becas o capacitaciones.
-        </div>
-        
-        <div class="draggable-text" style="top: 450px; right: 50px; width: 200px;">
-            <strong>🌐 Entorno digital:</strong> (redes, foros, plataformas educativas): Personas con las que comparto intereses pero no vínculos de confianza.
-        </div>
-        
-        <div class="draggable-text" style="top: 120px; left: 200px; width: 200px;">
-            <strong>👥 Compañeros SENA:</strong> Me permiten compartir ideas, adquirir conocimientos y colaborar en iniciativas formativas y proyectos tecnológicos.
-        </div>
-        
-        <div class="draggable-text" style="bottom: 180px; right: 200px; width: 180px;">
-            <strong>🏘️ Vecinos de confianza:</strong> Aquellos con los que tengo una convivencia respetuosa y apoyo mutuo en la comunidad.
-        </div>
-        
-        <div class="draggable-text" style="top: 100px; left: 310px; width: 120px;">
-            <strong>👩 Mi madre</strong><br>
-            <strong>👭 Mis hermanas</strong><br>
-            <strong>👶 Mis sobrinos</strong>
-        </div>
-        
-        <div class="draggable-text" style="bottom: 180px; right: 310px; width: 140px;">
-            <strong>Familia extensa:</strong> Mi hermana y mi padre, son una parte fundamental en mi entorno.
-        </div>
-        
-        <div class="draggable-text" style="top: 380px; left: 380px; width: 140px; background: rgba(255,255,255,0.95);">
-            <div style="text-align: center; color: #667eea;"><strong>💎 YO</strong></div>
-            <div style="font-size: 10px;">🎓 Culminar carrera en desarrollo<br>
-            📈 Lograr ascenso laboral<br>
-            🤝 Ayudas comunitarias<br>
-            💫 Honestidad y solidaridad<br>
-            🙏 Crecimiento espiritual</div>
-        </div>
-        
-        <div class="draggable-text" style="top: 50px; left: 50px; width: 200px;">
-            <strong>🌍 CONTEXTO SOCIAL AMPLIO</strong>
-        </div>
-        
-        <div class="draggable-text" style="top: 160px; left: 160px; width: 180px;">
-            <strong>🏢 ENTORNO CERCANO</strong>
-        </div>
-        
-        <div class="draggable-text" style="top: 270px; left: 270px; width: 120px;">
-            <strong>👨‍👩‍👧‍👦 FAMILIA</strong>
+    <div class="container-wrapper">
+        <div class="container" id="container">
+            <div class="title draggable-text" id="mainTitle">DIAGRAMA DE SISTEMAS: RELACIÓN DEL INDIVIDUO CON EL ENTORNO</div>
+            
+            <div class="circle circle-4">
+                <div class="resize-handle" style="bottom: -10px; right: -10px;"></div>
+            </div>
+            <div class="circle circle-3">
+                <div class="resize-handle" style="bottom: -10px; right: -10px;"></div>
+            </div>
+            <div class="circle circle-2">
+                <div class="resize-handle" style="bottom: -10px; right: -10px;"></div>
+            </div>
+            <div class="circle circle-1">
+                <div class="resize-handle" style="bottom: -10px; right: -10px;"></div>
+            </div>
+            
+            <!-- Textos arrastrables -->
+            <div class="draggable-text" style="top: 80px; right: 60px; width: 160px;">
+                <strong>🙏 Espiritualidad:</strong> La espiritualidad es necesaria y es un componente significativo de la vida, para la consolidación del proyecto de Dios en nuestra vida personal.
+            </div>
+            
+            <div class="draggable-text" style="bottom: 60px; left: 60px; width: 180px;">
+                <strong>📚 Inspiración Literaria:</strong> Soy amante de la literatura de Gabriel García Márquez, tanto que algunas formas de ver las cosas para mí han sido inspiradas por GABO.
+            </div>
+            
+            <div class="draggable-text" style="top: 300px; left: 50px; width: 200px;">
+                <strong>🏛️ Instituciones públicas y educativas:</strong> Con las que interactúo indirectamente a través de convocatorias, becas o capacitaciones.
+            </div>
+            
+            <div class="draggable-text" style="top: 450px; right: 50px; width: 200px;">
+                <strong>🌐 Entorno digital:</strong> (redes, foros, plataformas educativas): Personas con las que comparto intereses pero no vínculos de confianza.
+            </div>
+            
+            <div class="draggable-text" style="top: 120px; left: 200px; width: 200px;">
+                <strong>👥 Compañeros SENA:</strong> Me permiten compartir ideas, adquirir conocimientos y colaborar en iniciativas formativas y proyectos tecnológicos.
+            </div>
+            
+            <div class="draggable-text" style="bottom: 180px; right: 200px; width: 180px;">
+                <strong>🏘️ Vecinos de confianza:</strong> Aquellos con los que tengo una convivencia respetuosa y apoyo mutuo en la comunidad.
+            </div>
+            
+            <div class="draggable-text" style="top: 100px; left: 310px; width: 120px;">
+                <strong>👩 Mi madre</strong><br>
+                <strong>👭 Mis hermanas</strong><br>
+                <strong>👶 Mis sobrinos</strong>
+            </div>
+            
+            <div class="draggable-text" style="top: 380px; left: 380px; width: 140px; background: rgba(255,255,255,0.95);">
+                <div style="text-align: center; color: #667eea;"><strong>💎 YO</strong></div>
+                <div style="font-size: 10px;">🎓 Culminar carrera en desarrollo<br>
+                📈 Lograr ascenso laboral<br>
+                🤝 Ayudas comunitarias<br>
+                💫 Honestidad y solidaridad<br>
+                🙏 Crecimiento espiritual</div>
+            </div>
+            
+            <div class="draggable-text" style="top: 50px; left: 50px; width: 200px;">
+                <strong>🌍 CONTEXTO SOCIAL AMPLIO</strong>
+            </div>
+            
+            <div class="draggable-text" style="top: 160px; left: 160px; width: 180px;">
+                <strong>🏢 ENTORNO CERCANO</strong>
+            </div>
+            
+            <div class="draggable-text" style="top: 270px; left: 270px; width: 120px;">
+                <strong>👨‍👩‍👧‍👦 FAMILIA</strong>
+            </div>
         </div>
     </div>
     
@@ -359,124 +500,182 @@
     </div>
     
     <script>
-        let isDragging = false;
-        let currentElement = null;
-        let offset = { x: 0, y: 0 };
-        let currentEditingElement = null;
-        
-        // Hacer todos los textos arrastrables
+        // Variables globales mejor organizadas
+        const state = {
+            isDragging: false,
+            currentElement: null,
+            offset: { x: 0, y: 0 },
+            currentEditingElement: null,
+            isResizing: false,
+            resizeElement: null
+        };
+
+        // Inicializar elementos arrastrables
         function makeDraggable() {
-            const draggableElements = document.querySelectorAll('.draggable-text');
+            const draggableElements = document.querySelectorAll('.draggable-text, .circle');
             
             draggableElements.forEach(element => {
                 element.addEventListener('mousedown', startDrag);
-                element.addEventListener('dblclick', startEdit);
+                if (!element.classList.contains('circle')) {
+                    element.addEventListener('dblclick', startEdit);
+                }
+            });
+            
+            // Agregar event listeners a los handles de redimensionamiento
+            const resizeHandles = document.querySelectorAll('.resize-handle');
+            resizeHandles.forEach(handle => {
+                handle.addEventListener('mousedown', startResize);
             });
         }
-        
+
+        // Manejar inicio de arrastre
         function startDrag(e) {
-            if (e.detail === 2) return; // Evitar drag en doble clic
+            if (e.detail === 2) return; // Evitar arrastre en doble clic
+            if (e.target.classList.contains('resize-handle')) return; // Evitar arrastre si se hace clic en el handle
             
-            isDragging = true;
-            currentElement = e.target;
+            state.isDragging = true;
+            state.currentElement = e.currentTarget;
             
             // Marcar como seleccionado
-            document.querySelectorAll('.draggable-text').forEach(el => el.classList.remove('selected'));
-            currentElement.classList.add('selected');
+            document.querySelectorAll('.draggable-text, .circle').forEach(el => el.classList.remove('selected'));
+            state.currentElement.classList.add('selected');
             
-            const rect = currentElement.getBoundingClientRect();
-            const containerRect = document.getElementById('container').getBoundingClientRect();
-            
-            offset.x = e.clientX - rect.left;
-            offset.y = e.clientY - rect.top;
+            const rect = state.currentElement.getBoundingClientRect();
+            state.offset.x = e.clientX - rect.left;
+            state.offset.y = e.clientY - rect.top;
             
             e.preventDefault();
+            e.stopPropagation();
         }
-        
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-        
-        function drag(e) {
-            if (!isDragging || !currentElement) return;
+
+        // Manejar inicio de redimensionamiento
+        function startResize(e) {
+            state.isResizing = true;
+            state.resizeElement = e.target.parentElement;
             
-            const containerRect = document.getElementById('container').getBoundingClientRect();
-            let newX, newY;
+            // Marcar como seleccionado
+            document.querySelectorAll('.draggable-text, .circle').forEach(el => el.classList.remove('selected'));
+            state.resizeElement.classList.add('selected');
+            
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Manejar movimiento del ratón para arrastrar y redimensionar
+        function onMouseMove(e) {
+            const container = document.getElementById('container');
+            const containerRect = container.getBoundingClientRect();
+            
+            if (state.isResizing && state.resizeElement) {
+                // Manejar redimensionamiento de círculos
+                const elementRect = state.resizeElement.getBoundingClientRect();
+                
+                const centerX = elementRect.left + elementRect.width / 2 - containerRect.left;
+                const centerY = elementRect.top + elementRect.height / 2 - containerRect.top;
+                
+                const mouseX = e.clientX - containerRect.left;
+                const mouseY = e.clientY - containerRect.top;
+                
+                const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+                const newSize = Math.max(50, Math.min(containerRect.width, distance * 2));
+                
+                state.resizeElement.style.width = newSize + 'px';
+                state.resizeElement.style.height = newSize + 'px';
+                
+                // Mantener el círculo centrado en su posición original
+                state.resizeElement.style.left = (centerX - newSize / 2) + 'px';
+                state.resizeElement.style.top = (centerY - newSize / 2) + 'px';
+                
+                return;
+            }
+            
+            if (!state.isDragging || !state.currentElement) return;
+            
+            let newX = e.clientX - containerRect.left - state.offset.x;
+            let newY = e.clientY - containerRect.top - state.offset.y;
             
             // Manejar el título de manera especial
-            if (currentElement.id === 'mainTitle') {
-                // Para el título, usar coordenadas relativas al contenedor padre
-                newX = e.clientX - containerRect.left - offset.x;
-                newY = e.clientY - containerRect.top - offset.y;
+            if (state.currentElement.id === 'mainTitle') {
+                const elementWidth = state.currentElement.offsetWidth;
+                const maxX = containerRect.width - elementWidth;
                 
-                // Permitir que el título se mueva fuera del círculo principal
-                const maxX = 900 - currentElement.offsetWidth;
-                const minY = -150; // Permitir mover hacia arriba
-                const maxY = 900;
+                state.currentElement.style.left = Math.max(-100, Math.min(newX, maxX + 100)) + 'px';
+                state.currentElement.style.top = Math.max(-150, Math.min(newY, containerRect.height)) + 'px';
+                state.currentElement.style.transform = 'none';
+            } 
+            // Manejar círculos
+            else if (state.currentElement.classList.contains('circle')) {
+                const elementWidth = state.currentElement.offsetWidth;
+                const elementHeight = state.currentElement.offsetHeight;
                 
-                currentElement.style.left = Math.max(-100, Math.min(newX, maxX + 100)) + 'px';
-                currentElement.style.top = Math.max(minY, Math.min(newY, maxY)) + 'px';
-                currentElement.style.transform = 'none'; // Quitar el transform para usar posición absoluta
-            } else {
-                // Para otros elementos
-                newX = e.clientX - containerRect.left - offset.x;
-                newY = e.clientY - containerRect.top - offset.y;
+                state.currentElement.style.left = Math.max(0, Math.min(newX, containerRect.width - elementWidth)) + 'px';
+                state.currentElement.style.top = Math.max(0, Math.min(newY, containerRect.height - elementHeight)) + 'px';
+            } 
+            // Manejar otros elementos de texto
+            else {
+                const elementWidth = state.currentElement.offsetWidth;
+                const elementHeight = state.currentElement.offsetHeight;
                 
-                const maxX = 900 - currentElement.offsetWidth;
-                const maxY = 900 - currentElement.offsetHeight;
-                
-                currentElement.style.left = Math.max(0, Math.min(newX, maxX)) + 'px';
-                currentElement.style.top = Math.max(0, Math.min(newY, maxY)) + 'px';
+                state.currentElement.style.left = Math.max(0, Math.min(newX, containerRect.width - elementWidth)) + 'px';
+                state.currentElement.style.top = Math.max(0, Math.min(newY, containerRect.height - elementHeight)) + 'px';
             }
             
-            currentElement.style.right = 'auto';
-            currentElement.style.bottom = 'auto';
+            state.currentElement.style.right = 'auto';
+            state.currentElement.style.bottom = 'auto';
         }
-        
+
+        // Detener arrastre o redimensionamiento
         function stopDrag() {
-            if (isDragging) {
-                isDragging = false;
-                currentElement = null;
-            }
+            state.isDragging = false;
+            state.isResizing = false;
+            state.currentElement = null;
+            state.resizeElement = null;
         }
-        
+
+        // Iniciar edición de texto
         function startEdit(e) {
-            currentEditingElement = e.target;
-            document.getElementById('editTextarea').value = currentEditingElement.innerHTML;
+            state.currentEditingElement = e.currentTarget;
+            document.getElementById('editTextarea').value = state.currentEditingElement.innerHTML;
             document.getElementById('editingOverlay').style.display = 'flex';
-            currentEditingElement.classList.add('editing');
+            state.currentEditingElement.classList.add('editing');
         }
-        
+
+        // Guardar texto editado
         function saveEdit() {
-            if (currentEditingElement) {
-                currentEditingElement.innerHTML = document.getElementById('editTextarea').value;
-                currentEditingElement.classList.remove('editing');
+            if (state.currentEditingElement) {
+                state.currentEditingElement.innerHTML = document.getElementById('editTextarea').value;
+                state.currentEditingElement.classList.remove('editing');
             }
             document.getElementById('editingOverlay').style.display = 'none';
-            currentEditingElement = null;
+            state.currentEditingElement = null;
         }
-        
+
+        // Cancelar edición
         function cancelEdit() {
-            if (currentEditingElement) {
-                currentEditingElement.classList.remove('editing');
+            if (state.currentEditingElement) {
+                state.currentEditingElement.classList.remove('editing');
             }
             document.getElementById('editingOverlay').style.display = 'none';
-            currentEditingElement = null;
+            state.currentEditingElement = null;
         }
-        
+
+        // Eliminar texto actual
         function deleteCurrentText() {
-            if (currentEditingElement) {
+            if (state.currentEditingElement) {
                 // No permitir eliminar el título principal
-                if (currentEditingElement.id === 'mainTitle') {
+                if (state.currentEditingElement.id === 'mainTitle') {
                     alert('No se puede eliminar el título principal. Puedes editarlo pero no eliminarlo.');
                     return;
                 }
-                currentEditingElement.remove();
+                state.currentEditingElement.remove();
             }
             document.getElementById('editingOverlay').style.display = 'none';
-            currentEditingElement = null;
+            state.currentEditingElement = null;
         }
-        
+
+        // Agregar nuevo texto
         function addNewText() {
+            const container = document.getElementById('container');
             const newText = document.createElement('div');
             newText.className = 'draggable-text';
             newText.innerHTML = '<strong>🆕 Nuevo texto:</strong> Haz doble clic para editar este contenido';
@@ -484,137 +683,150 @@
             newText.style.left = '200px';
             newText.style.width = '180px';
             
-            document.getElementById('container').appendChild(newText);
+            container.appendChild(newText);
             
             // Hacer el nuevo elemento arrastrable
             newText.addEventListener('mousedown', startDrag);
             newText.addEventListener('dblclick', startEdit);
+            
+            // Seleccionar el nuevo texto
+            document.querySelectorAll('.draggable-text, .circle').forEach(el => el.classList.remove('selected'));
+            newText.classList.add('selected');
+            state.currentElement = newText;
         }
-        
-        // Aplicar estilos a texto seleccionado
-        document.getElementById('fontSize').addEventListener('change', function() {
-            const selected = document.querySelector('.draggable-text.selected');
-            if (selected) {
-                selected.style.fontSize = this.value + 'px';
-            }
-        });
-        
-        document.getElementById('textColor').addEventListener('change', function() {
-            const selected = document.querySelector('.draggable-text.selected');
-            if (selected) {
-                selected.style.color = this.value;
-            }
-        });
-        
-        document.getElementById('bgColor').addEventListener('change', function() {
-            const selected = document.querySelector('.draggable-text.selected');
-            if (selected) {
-                selected.style.backgroundColor = this.value + 'cc';
-            }
-        });
-        
-        function saveLayout() {
-            const elements = [];
-            document.querySelectorAll('.draggable-text').forEach(el => {
-                elements.push({
-                    id: el.id || null,
-                    content: el.innerHTML,
-                    style: el.style.cssText,
-                    className: el.className,
-                    position: {
-                        top: el.style.top,
-                        left: el.style.left,
-                        right: el.style.right,
-                        bottom: el.style.bottom
-                    }
-                });
-            });
-            
-            const data = JSON.stringify(elements, null, 2);
-            const blob = new Blob([data], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'diagrama_sistemas.json';
-            a.click();
-            
-            URL.revokeObjectURL(url);
-        }
-        
-        function loadLayout() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            
-                            // Limpiar elementos existentes
-                            document.querySelectorAll('.draggable-text').forEach(el => el.remove());
-                            
-                            // Recrear elementos
-                            data.forEach(item => {
-                                const el = document.createElement('div');
-                                el.className = item.className || 'draggable-text';
-                                if (item.id) el.id = item.id;
-                                el.innerHTML = item.content;
-                                el.style.cssText = item.style;
-                                
-                                document.getElementById('container').appendChild(el);
-                                
-                                el.addEventListener('mousedown', startDrag);
-                                el.addEventListener('dblclick', startEdit);
-                            });
-                        } catch (error) {
-                            alert('Error al cargar el archivo');
-                        }
-                    };
-                    reader.readAsText(file);
+
+        // Aplicar estilos al elemento seleccionado
+        function applyStyles() {
+            const selectedElement = document.querySelector('.selected');
+            if (selectedElement) {
+                const fontSize = document.getElementById('fontSize').value + 'px';
+                const textColor = document.getElementById('textColor').value;
+                const bgColor = document.getElementById('bgColor').value;
+                const circleColor = document.getElementById('circleColor').value;
+                
+                if (selectedElement.classList.contains('draggable-text') || selectedElement.classList.contains('title')) {
+                    selectedElement.style.fontSize = fontSize;
+                    selectedElement.style.color = textColor;
+                    selectedElement.style.backgroundColor = bgColor + 'cc';
+                } else if (selectedElement.classList.contains('circle')) {
+                    selectedElement.style.background = `linear-gradient(135deg, ${circleColor} 0%, ${adjustColor(circleColor, -20)} 100%)`;
                 }
-            };
-            input.click();
+            }
         }
-        
+
+        // Función auxiliar para ajustar el brillo del color
+        function adjustColor(hex, percent) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            
+            return `#${Math.min(255, Math.max(0, r + (r * percent / 100))).toString(16).padStart(2, '0')}${Math.min(255, Math.max(0, g + (g * percent / 100))).toString(16).padStart(2, '0')}${Math.min(255, Math.max(0, b + (b * percent / 100))).toString(16).padStart(2, '0')}`;
+        }
+
+        // Guardar diseño en localStorage
+        function saveLayout() {
+            const container = document.getElementById('container');
+            const elements = Array.from(container.children).map(el => ({
+                class: el.className,
+                style: el.style.cssText,
+                innerHTML: el.innerHTML,
+                id: el.id || null
+            }));
+            
+            localStorage.setItem('diagramLayout', JSON.stringify(elements));
+            alert('Diseño guardado correctamente en el navegador');
+        }
+
+        // Cargar diseño desde localStorage
+        function loadLayout() {
+            const saved = localStorage.getItem('diagramLayout');
+            if (saved) {
+                if (confirm('¿Cargar diseño guardado? Esto reemplazará el diseño actual.')) {
+                    const container = document.getElementById('container');
+                    container.innerHTML = '';
+                    const elements = JSON.parse(saved);
+                    
+                    elements.forEach(item => {
+                        const el = document.createElement('div');
+                        el.className = item.class;
+                        el.style.cssText = item.style;
+                        el.innerHTML = item.innerHTML;
+                        if (item.id) el.id = item.id;
+                        
+                        container.appendChild(el);
+                        
+                        if (el.classList.contains('draggable-text') || el.classList.contains('title')) {
+                            el.addEventListener('mousedown', startDrag);
+                            el.addEventListener('dblclick', startEdit);
+                        } else if (el.classList.contains('circle')) {
+                            const handle = document.createElement('div');
+                            handle.className = 'resize-handle';
+                            handle.style.cssText = 'bottom: -10px; right: -10px;';
+                            el.appendChild(handle);
+                            
+                            el.addEventListener('mousedown', startDrag);
+                            handle.addEventListener('mousedown', startResize);
+                        }
+                    });
+                    
+                    alert('Diseño cargado correctamente');
+                }
+            } else {
+                alert('No hay diseño guardado en este navegador');
+            }
+        }
+
+        // Exportar diagrama como imagen
         function exportImage() {
             // Remover elementos de selección temporalmente
-            document.querySelectorAll('.draggable-text').forEach(el => {
-                el.classList.remove('selected');
-                el.style.cursor = 'default';
-            });
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
             
-            setTimeout(() => {
-                html2canvas(document.getElementById('container')).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = 'diagrama_sistemas.png';
-                    link.href = canvas.toDataURL();
-                    link.click();
-                    
-                    // Restaurar cursor
-                    document.querySelectorAll('.draggable-text').forEach(el => {
-                        el.style.cursor = 'move';
-                    });
-                });
-            }, 100);
+            // Usar html2canvas para exportar
+            html2canvas(document.getElementById('container'), {
+                backgroundColor: null,
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'diagrama_sistemas.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }).catch(err => {
+                console.error('Error al exportar:', err);
+                alert('Error al exportar la imagen');
+            });
         }
-        
+
+        // Restablecer posiciones al estado inicial
         function resetPositions() {
-            // Recargar la página para restablecer posiciones originales
-            location.reload();
-        }
-        
-        // Inicializar
-        makeDraggable();
-        
-        // Click fuera para deseleccionar
-        document.addEventListener('click', function(e) {
-            if (!e.target.classList.contains('draggable-text') && !e.target.closest('.controls')) {
-                document.querySelectorAll('.draggable-text').forEach(el => el.classList.remove('selected'));
+            if (confirm('¿Restablecer todas las posiciones y estilos al estado original?')) {
+                localStorage.removeItem('diagramLayout');
+                location.reload();
             }
+        }
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', () => {
+            makeDraggable();
+            
+            // Configurar eventos para los controles
+            document.getElementById('fontSize').addEventListener('change', applyStyles);
+            document.getElementById('textColor').addEventListener('input', applyStyles);
+            document.getElementById('bgColor').addEventListener('input', applyStyles);
+            document.getElementById('circleColor').addEventListener('input', applyStyles);
+            
+            // Configurar eventos globales del ratón
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', stopDrag);
+            
+            // Deseleccionar al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.draggable-text, .circle, .controls, .edit-modal')) {
+                    document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+                }
+            });
         });
     </script>
     
